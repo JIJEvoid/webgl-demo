@@ -216,8 +216,19 @@ class ThreeDWorld {
             // 后缀为js或json的文件统一当做js格式处理
             pathName = pathName === 'json' ? 'js' : pathName;
             pathFomat = path.substring(path.lastIndexOf('.') + 1).toLowerCase();
+            console.log(pathFomat);
             switch (pathFomat) {
                 case 'js':
+                    return new Promise(function(resolve) {
+                        jsonLoader.load(path, (geometry, material) => {
+                            resolve({
+                                geometry: geometry,
+                                material: material
+                            })
+                        });
+                    });
+                    break;
+                case 'json':
                     return new Promise(function(resolve) {
                         jsonLoader.load(path, (geometry, material) => {
                             resolve({
@@ -270,7 +281,7 @@ class ThreeDWorld {
     }
     // 模型加入场景
     addObjs() {
-        this.loader(['obj/robot.fbx', 'obj/Guitar/Guitar.fbx','obj/cpac5.json','obj/cpbook2.json','obj/cpmovie4.json']).then((result) => {
+        this.loader(['obj/robot.fbx', 'obj/Guitar/Guitar.fbx','obj/monu9.obj','obj/cpbook2.json','obj/cpmovie4.json']).then((result) => {
             console.log(result)
             let robot = result[0].children[1].geometry;
             let guitarObj = result[1].children[0].geometry;
