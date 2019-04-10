@@ -214,7 +214,6 @@ class ThreeDWorld {
             basePath = path.substring(0, path.lastIndexOf('/') + 1);
             pathName = path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
             // 后缀为js或json的文件统一当做js格式处理
-            pathName = pathName === 'json' ? 'js' : pathName;
             pathFomat = path.substring(path.lastIndexOf('.') + 1).toLowerCase();
             console.log(pathFomat);
             switch (pathFomat) {
@@ -279,41 +278,54 @@ class ThreeDWorld {
         });
         return Promise.all(promiseArr);
     }
+
     // 模型加入场景
     addObjs() {
         this.loader(['obj/robot.fbx', 'obj/Guitar/Guitar.fbx','obj/monu9.obj','obj/cpbook2.json','obj/cpmovie4.json']).then((result) => {
-            console.log(result)
+            console.log(result);
             let robot = result[0].children[1].geometry;
             let guitarObj = result[1].children[0].geometry;
-
+            let vertices3 = result[3].geometry;
+            vertices3.scale(100,100,100);
+            vertices3.center();
+            vertices3.translate(0,0,0);//设定模型位置
+            vertices3.rotateY(Math.PI / 4);
+            console.log(vertices3.position);
             guitarObj.scale(1.5, 1.5, 1.5);
             guitarObj.rotateX(-Math.PI / 2);
             robot.scale(0.08, 0.08, 0.08);
             robot.rotateX(-Math.PI / 2);
-            this.addPartices(robot, guitarObj);
+            robot.translate(30,0,0);//设定模型位置
+            this.addPartices([robot, vertices3]);
         });
     }
+
     // 几何模型转缓存几何模型
     toBufferGeometry(geometry) {
         if (geometry.type === 'BufferGeometry') return geometry;
         return new THREE.BufferGeometry().fromGeometry(geometry);
     }
+
     // 粒子变换
-    addPartices(obj1, obj2) {
-        obj1 = this.toBufferGeometry(obj1);
-        obj2 = this.toBufferGeometry(obj2);
-        let moreObj = obj1
-        let lessObj = obj2;
-        // 找到顶点数量较多的模型
-        if (obj2.attributes.position.array.length > obj1.attributes.position.array.length) {
-            [moreObj, lessObj] = [lessObj, moreObj];
+    addPartices(objlist) {
+        for(var i=0;i<objlist.length;i++){
+            objlist[i] = this.toBufferGeometry(objlist[i]);
         }
+
+        //顶点数由大到小排序
+        objlist.sort((a,b)=>{return b.attributes.position.array.length-a.attributes.position.array.length});
+        console.log(objlist);
+
+        let moreObj = objlist[0];
+        let lessObj = objlist[objlist.length-1];
+
         let morePos = moreObj.attributes.position.array;
         let lessPos = lessObj.attributes.position.array;
         let moreLen = morePos.length;
         let lessLen = lessPos.length;
         // 根据最大的顶点数开辟数组空间，同于存放顶点较少的模型顶点数据
         let position2 = new Float32Array(moreLen);
+
         // 先把顶点较少的模型顶点坐标放进数组
         position2.set(lessPos);
         // 剩余空间重复赋值
@@ -323,14 +335,20 @@ class ThreeDWorld {
             position2[i + 1] = lessPos[j + 1];
             position2[i + 2] = lessPos[j + 2];
         }
+
         // sizes用来控制每个顶点的尺寸，初始为4
         let sizes = new Float32Array(moreLen);
         for (let i = 0; i < moreLen; i++) {
             sizes[i] = 4;
         }
+
         // 挂载属性值
         moreObj.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
         moreObj.addAttribute('position2', new THREE.BufferAttribute(position2, 3));
+
+        console.log(`moreObj`);
+        console.log(moreObj);
+
         // 传递给shader共享的的属性值
         let uniforms = {
             // 顶点颜色
@@ -364,19 +382,21 @@ class ThreeDWorld {
         // 粒子动画
         let tween = new TWEEN.Tween(pos).to({
             val: 0
-        }, 1500).easing(TWEEN.Easing.Quadratic.InOut).delay(2000).onUpdate(updateCallback).onComplete(completeCallBack.bind(pos, 'go'));
+        }, 1500).easing(TWEEN.Easing.Quadratic.InOut).delay(1000).onUpdate(updateCallback.bind(this, null)).onComplete(completeCallBack.bind(this, 'go'));
         let tweenBack = new TWEEN.Tween(pos).to({
             val: 1
-        }, 1500).easing(TWEEN.Easing.Quadratic.InOut).delay(2000).onUpdate(updateCallback).onComplete(completeCallBack.bind(pos, 'back'));
-        tween.chain(tweenBack);
-        tweenBack.chain(tween);
+        }, 1500).easing(TWEEN.Easing.Quadratic.InOut).delay(1000).onUpdate(updateCallback.bind(this, null)).onComplete(completeCallBack.bind(this, 'back'));
+        /** todo 将这两个缓动形式保存起来,相互调用 **/
+        this.tweenInstance1 = tween;
+        this.tweenInstance2 = tweenBack;
+
         tween.start();
         // 动画持续更新的回调函数
         function updateCallback() {
-            particleSystem.material.uniforms.val.value = this.val;
+            particleSystem.material.uniforms.val.value = pos.val;
             // 颜色过渡
             if (this.nextcolor) {
-                let val = this.order === 'back' ? (1 - this.val) : this.val;
+                let val = this.order === 'back' ? (1 - pos.val) : pos.val;
                 let uColor = particleSystem.material.uniforms.color.value;
                 uColor.r = this.color.r + (this.nextcolor.r - this.color.r) * val;
                 uColor.b = this.color.b + (this.nextcolor.b - this.color.b) * val;
@@ -399,6 +419,11 @@ class ThreeDWorld {
                 r: Math.random(),
                 b: Math.random(),
                 g: Math.random()
+            }
+            if(order=='go'){
+                this.tweenInstance2.start();
+            }else{
+                this.tweenInstance1.start();
             }
         }
         this.scene.add(particleSystem);
@@ -427,7 +452,7 @@ class ThreeDWorld {
         let time = Date.now() * 0.005;
         if (this.particleSystem) {
             let bufferObj = this.particleSystem.geometry;
-            this.particleSystem.rotation.y = 0.01 * time;
+            //this.particleSystem.rotation.y = 0.01 * time;
             let sizes = bufferObj.attributes.size.array;
             let len = sizes.length;
             for (let i = 0; i < len; i++) {
