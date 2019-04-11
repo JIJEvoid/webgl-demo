@@ -471,3 +471,5 @@ class ThreeDWorld {
 function onLoad() {
     new ThreeDWorld(document.getElementById("world"));
 }
+
+window.onload = onLoad();
