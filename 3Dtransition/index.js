@@ -18,6 +18,8 @@ class ThreeDWorld {
         // 循环更新场景
         this.update();
     }
+
+    //创建场景
     createScene() {
         this.HEIGHT = window.innerHeight;
         this.WIDTH = window.innerWidth;
@@ -69,6 +71,8 @@ class ThreeDWorld {
         // 监听屏幕，缩放屏幕更新相机和渲染器的尺寸
         window.addEventListener('resize', this.handleWindowResize.bind(this), false);
     }
+
+    //创建光源
     createLights() {
         // 户外光源
         // 第一个参数是天空的颜色，第二个参数是地上的颜色，第三个参数是光源的强度
@@ -105,6 +109,7 @@ class ThreeDWorld {
         this.scene.add(this.shadowLight);
         this.scene.add(this.ambientLight);
     }
+    //初始化性能监控
     initStats() {
         this.stats = new Stats();
         // 将性能监控屏区显示在左上角
@@ -113,6 +118,7 @@ class ThreeDWorld {
         this.stats.domElement.style.zIndex = 100;
         this.container.appendChild(this.stats.domElement);
     }
+
     handleWindowResize() {
         // 更新渲染器的高度和宽度以及相机的纵横比
         this.HEIGHT = window.innerHeight;
@@ -121,6 +127,8 @@ class ThreeDWorld {
         this.camera.aspect = this.WIDTH / this.HEIGHT;
         this.camera.updateProjectionMatrix();
     }
+
+    //添加事件监听
     addMouseListener() {
         // 层层往上寻找模型的父级，直至它是场景下的直接子元素
         function parentUtilScene(obj) {
@@ -178,6 +186,7 @@ class ThreeDWorld {
             }
         }
     }
+
     // 射线处理
     handleRaycasters(event, callback) {
         let mouse = new THREE.Vector2();
@@ -215,7 +224,6 @@ class ThreeDWorld {
             pathName = path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
             // 后缀为js或json的文件统一当做js格式处理
             pathFomat = path.substring(path.lastIndexOf('.') + 1).toLowerCase();
-            console.log(pathFomat);
             switch (pathFomat) {
                 case 'js':
                     return new Promise(function(resolve) {
@@ -282,21 +290,29 @@ class ThreeDWorld {
     // 模型加入场景
     addObjs() {
         this.loader(['obj/robot.fbx', 'obj/Guitar/Guitar.fbx','obj/monu9.obj','obj/cpbook2.json','obj/cpmovie4.json']).then((result) => {
-            console.log(result);
+
             let robot = result[0].children[1].geometry;
             let guitarObj = result[1].children[0].geometry;
             let vertices3 = result[3].geometry;
+            let vertices4 = result[4].geometry;
+
             vertices3.scale(100,100,100);
             vertices3.center();
             vertices3.translate(0,0,0);//设定模型位置
             vertices3.rotateY(Math.PI / 4);
-            console.log(vertices3.position);
+
+            vertices4.scale(50,50,50);
+            vertices4.center();
+            vertices4.translate(0,0,0);//设定模型位置
+            vertices4.rotateX(Math.PI / 2);
+
             guitarObj.scale(1.5, 1.5, 1.5);
             guitarObj.rotateX(-Math.PI / 2);
             robot.scale(0.08, 0.08, 0.08);
             robot.rotateX(-Math.PI / 2);
             robot.translate(30,0,0);//设定模型位置
-            this.addPartices([robot, vertices3]);
+            this.addPartices([vertices4, vertices3]);
+
         });
     }
 
@@ -306,38 +322,44 @@ class ThreeDWorld {
         return new THREE.BufferGeometry().fromGeometry(geometry);
     }
 
+    //获取顶点数最多的item
+    getMaxItem(arr){
+        let present = null;
+        for(var i=0;i<arr.length;i++){
+            if(present){
+                if(arr[i].attributes.position.array.length>=present.attributes.position.array.length){
+                    present = arr[i]
+                }
+            }else if(!present){
+                present = arr[i]
+            }
+        }
+        return present;
+    }
+
+
     // 粒子变换
     addPartices(objlist) {
+
         for(var i=0;i<objlist.length;i++){
             objlist[i] = this.toBufferGeometry(objlist[i]);
         }
+        this.objLen = objlist.length;//设定模型数量 == 页面数
 
         //顶点数由大到小排序
-        objlist.sort((a,b)=>{return b.attributes.position.array.length-a.attributes.position.array.length});
-        console.log(objlist);
-
-        let moreObj = objlist[0];
-        let lessObj = objlist[objlist.length-1];
-
+        //objlist.sort((a,b)=>{return b.attributes.position.array.length-a.attributes.position.array.length});
+        let moreObj = this.getMaxItem(objlist);
         let morePos = moreObj.attributes.position.array;
-        let lessPos = lessObj.attributes.position.array;
         let moreLen = morePos.length;
-        let lessLen = lessPos.length;
-        // 根据最大的顶点数开辟数组空间，同于存放顶点较少的模型顶点数据
-        let position2 = new Float32Array(moreLen);
 
-        // 先把顶点较少的模型顶点坐标放进数组
-        position2.set(lessPos);
-        // 剩余空间重复赋值
-        for (let i = lessLen, j = 0; i < moreLen; i++, j++) {
-            j %= lessLen;
-            position2[i] = lessPos[j];
-            position2[i + 1] = lessPos[j + 1];
-            position2[i + 2] = lessPos[j + 2];
-        }
+        let lessObj = objlist[0];
+        let lessPos = lessObj.attributes.position.array;
+
+        let position2 = this.createParticleArray(moreLen,lessPos);
 
         // sizes用来控制每个顶点的尺寸，初始为4
         let sizes = new Float32Array(moreLen);
+
         for (let i = 0; i < moreLen; i++) {
             sizes[i] = 4;
         }
@@ -345,9 +367,6 @@ class ThreeDWorld {
         // 挂载属性值
         moreObj.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
         moreObj.addAttribute('position2', new THREE.BufferAttribute(position2, 3));
-
-        console.log(`moreObj`);
-        console.log(moreObj);
 
         // 传递给shader共享的的属性值
         let uniforms = {
@@ -363,6 +382,12 @@ class ThreeDWorld {
             // 传递val值，用于shader计算顶点位置
             val: {
                 value: 1.0
+            },
+            begin:{
+                value : 0 //转变前的模型id
+            },
+            end:{
+                value: 0 //转变目标模型id
             }
         };
         // 着色器材料
@@ -383,26 +408,38 @@ class ThreeDWorld {
         let tween = new TWEEN.Tween(pos).to({
             val: 0
         }, 1500).easing(TWEEN.Easing.Quadratic.InOut).delay(1000).onUpdate(updateCallback.bind(this, null)).onComplete(completeCallBack.bind(this, 'go'));
+
         let tweenBack = new TWEEN.Tween(pos).to({
-            val: 1
+            val: 0
         }, 1500).easing(TWEEN.Easing.Quadratic.InOut).delay(1000).onUpdate(updateCallback.bind(this, null)).onComplete(completeCallBack.bind(this, 'back'));
+
         /** todo 将这两个缓动形式保存起来,相互调用 **/
         this.tweenInstance1 = tween;
         this.tweenInstance2 = tweenBack;
 
+        particleSystem.material.uniforms.begin.value = 0;
+        particleSystem.material.uniforms.end.value = 1;
         tween.start();
+
         // 动画持续更新的回调函数
         function updateCallback() {
             particleSystem.material.uniforms.val.value = pos.val;
+            console.log(particleSystem.material.uniforms.val.value)
             // 颜色过渡
             if (this.nextcolor) {
-                let val = this.order === 'back' ? (1 - pos.val) : pos.val;
+                //let val = this.order === 'back' ? (1 - pos.val) : pos.val;
+                let val = pos.val;
                 let uColor = particleSystem.material.uniforms.color.value;
-                uColor.r = this.color.r + (this.nextcolor.r - this.color.r) * val;
+                /*uColor.r = this.color.r + (this.nextcolor.r - this.color.r) * val;
                 uColor.b = this.color.b + (this.nextcolor.b - this.color.b) * val;
-                uColor.g = this.color.g + (this.nextcolor.g - this.color.g) * val;
+                uColor.g = this.color.g + (this.nextcolor.g - this.color.g) * val;*/
+
+                uColor.r = this.color.r*val + (this.nextcolor.r) * (1-val);
+                uColor.b = this.color.b*val + (this.nextcolor.b) * (1-val);
+                uColor.g = this.color.g*val + (this.nextcolor.g) * (1-val);
             }
         }
+
         // 每轮动画完成时的回调函数
         function completeCallBack(order) {
             let uColor = particleSystem.material.uniforms.color.value;
@@ -420,15 +457,57 @@ class ThreeDWorld {
                 b: Math.random(),
                 g: Math.random()
             }
-            if(order=='go'){
-                this.tweenInstance2.start();
-            }else{
-                this.tweenInstance1.start();
-            }
+            console.log(this.color)
+            console.log(this.nextcolor)
+
+            this.checkNextStep(particleSystem,pos);
+            //this.runTweenByType(this.order);
         }
         this.scene.add(particleSystem);
         this.particleSystem = particleSystem;
     }
+
+    //执行下一个缓动函数
+    runTweenByType(type){
+        if(type=='go'){
+            this.tweenInstance2.start();
+        }
+        else{
+            this.tweenInstance1.start();
+        }
+    }
+
+    //创建顶点信息描述文件
+    createParticleArray(moreLen,lessPos) {
+
+        // 根据最大的顶点数开辟数组空间，同于存放顶点较少的模型顶点数据
+        let position2 = new Float32Array(moreLen);
+
+        // 先把顶点较少的模型顶点坐标放进数组
+        position2.set(lessPos);
+        let lessLen = lessPos.length;
+        // 剩余空间重复赋值
+        for (let i = lessLen, j = 0; i < moreLen; i++, j++) {
+            j %= lessLen;
+            position2[i] = lessPos[j];
+            position2[i + 1] = lessPos[j + 1];
+            position2[i + 2] = lessPos[j + 2];
+        }
+        return position2;
+    }
+
+    //判断下一个模型应该如何变化
+    checkNextStep(particleSystem,pos){
+        pos.val = particleSystem.material.uniforms.val.value = 1;
+        if(particleSystem.material.uniforms.end.value == 1){
+            particleSystem.material.uniforms.begin.value = 1;
+            particleSystem.material.uniforms.end.value = 0;
+        }else{
+            particleSystem.material.uniforms.begin.value = 0;
+            particleSystem.material.uniforms.end.value = 1;
+        }
+    }
+
     getTexture(canvasSize = 64) {
         let canvas = document.createElement('canvas');
         canvas.width = canvasSize;
@@ -446,6 +525,7 @@ class ThreeDWorld {
         texture.needsUpdate = true;
         return texture;
     }
+
     update() {
         TWEEN.update();
         this.stats.update();

@@ -16,22 +16,49 @@
 	<div id="world"></div>
 	<script type="x-shader/x-vertex" id="vertexshader">
 		attribute float size;
+
 		attribute vec3 position2;
+
 		uniform float val;
+		uniform int begin;
+		uniform int end;
 		varying vec3 vColor;
 		varying float opacity;
+
+		varying vec3 beforeposition;
+		varying vec3 afterposition;
+
+
+
 		void main() {
 			float border = -150.0;
-			float min_border = -160.0;
+			float min_border = -140.0;
 			float max_opacity = 1.0;
 			float min_opacity = 0.03;
 			float sizeAdd = 20.0;
 
 			vec3 vPos;
 
-			vPos.x = position.x * val + position2.x * (1.-val);
-			vPos.y = position.y* val + position2.y * (1.-val);
-			vPos.z = position.z* val + position2.z * (1.-val);
+			if(begin == 0 && end == 1){
+				beforeposition = position;
+				afterposition = position2;
+			}
+			//else if(begin == 1 && end == 2){
+				//beforeposition = position2;
+				//afterposition = position3;
+			//}else if(begin == 2 && end == 3){
+				//beforeposition = position3;
+				//afterposition = position4;
+			//}
+			else{
+			    beforeposition = position2;
+				afterposition = position;
+			}
+
+
+			vPos.x = beforeposition.x * val + afterposition.x * (1.-val);
+			vPos.y = beforeposition.y* val + afterposition.y * (1.-val);
+			vPos.z = beforeposition.z* val + afterposition.z * (1.-val);
 
 			vec4 mvPosition = modelViewMatrix * vec4( vPos, 1.0 );
 			if(mvPosition.z > border){
@@ -45,6 +72,7 @@
 				opacity = (1.0-percent) * (max_opacity - min_opacity) + min_opacity;
 				gl_PointSize = percent * (sizeAdd) + size;
 			}
+
 			float positionY = vPos.y;
 			vColor.x = abs(sin(positionY));
 			vColor.y = abs(cos(positionY));
