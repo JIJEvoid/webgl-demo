@@ -109,6 +109,7 @@ class ThreeDWorld {
         this.scene.add(this.shadowLight);
         this.scene.add(this.ambientLight);
     }
+
     //初始化性能监控
     initStats() {
         this.stats = new Stats();
@@ -119,6 +120,7 @@ class ThreeDWorld {
         this.container.appendChild(this.stats.domElement);
     }
 
+    //窗口改变自适应
     handleWindowResize() {
         // 更新渲染器的高度和宽度以及相机的纵横比
         this.HEIGHT = window.innerHeight;
@@ -199,6 +201,7 @@ class ThreeDWorld {
             callback && callback(intersects[0].object);
         }
     }
+
     // 阴影添加
     onShadow(obj) {
         if (obj.type === 'Mesh') {
@@ -212,6 +215,7 @@ class ThreeDWorld {
         }
         return;
     }
+
     // 自定义模型加载
     loader(pathArr) {
         let jsonLoader = new THREE.JSONLoader();
@@ -311,7 +315,7 @@ class ThreeDWorld {
             robot.scale(0.08, 0.08, 0.08);
             robot.rotateX(-Math.PI / 2);
             robot.translate(30,0,0);//设定模型位置
-            this.addPartices([vertices4, vertices3]);
+            this.addPartices([vertices4, vertices3,robot,guitarObj]);
 
         });
     }
@@ -337,7 +341,6 @@ class ThreeDWorld {
         return present;
     }
 
-
     // 粒子变换
     addPartices(objlist) {
 
@@ -352,10 +355,12 @@ class ThreeDWorld {
         let morePos = moreObj.attributes.position.array;
         let moreLen = morePos.length;
 
-        let lessObj = objlist[0];
-        let lessPos = lessObj.attributes.position.array;
-
-        let position2 = this.createParticleArray(moreLen,lessPos);
+        let positionArr = [];
+        for(var i=0;i<objlist.length;i++){
+            let lessPos = objlist[i].attributes.position.array;
+            let position = this.createParticleArray(moreLen,lessPos);
+            positionArr.push(position);
+        }
 
         // sizes用来控制每个顶点的尺寸，初始为4
         let sizes = new Float32Array(moreLen);
@@ -366,8 +371,11 @@ class ThreeDWorld {
 
         // 挂载属性值
         moreObj.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
-        moreObj.addAttribute('position2', new THREE.BufferAttribute(position2, 3));
-
+        moreObj.addAttribute('position', new THREE.BufferAttribute(positionArr[0], 3));
+        moreObj.addAttribute('position2', new THREE.BufferAttribute(positionArr[1], 3));
+        moreObj.addAttribute('position3', new THREE.BufferAttribute(positionArr[2], 3));
+        moreObj.addAttribute('position4', new THREE.BufferAttribute(positionArr[3], 3));
+        console.log(moreObj);
         // 传递给shader共享的的属性值
         let uniforms = {
             // 顶点颜色
@@ -413,7 +421,7 @@ class ThreeDWorld {
             val: 0
         }, 1500).easing(TWEEN.Easing.Quadratic.InOut).delay(1000).onUpdate(updateCallback.bind(this, null)).onComplete(completeCallBack.bind(this, 'back'));
 
-        /** todo 将这两个缓动形式保存起来,相互调用 **/
+        //将这两个缓动形式保存起来,相互调用
         this.tweenInstance1 = tween;
         this.tweenInstance2 = tweenBack;
 
@@ -453,15 +461,15 @@ class ThreeDWorld {
             }
             // 随机生成将要变换后的粒子颜色
             this.nextcolor = {
-                r: Math.random(),
-                b: Math.random(),
-                g: Math.random()
+                r: Math.random()*0.5,
+                b: Math.random()*0.5,
+                g: Math.random()*0.5
             }
             console.log(this.color)
             console.log(this.nextcolor)
 
             this.checkNextStep(particleSystem,pos);
-            //this.runTweenByType(this.order);
+            this.runTweenByType(this.order);
         }
         this.scene.add(particleSystem);
         this.particleSystem = particleSystem;
@@ -499,15 +507,23 @@ class ThreeDWorld {
     //判断下一个模型应该如何变化
     checkNextStep(particleSystem,pos){
         pos.val = particleSystem.material.uniforms.val.value = 1;
-        if(particleSystem.material.uniforms.end.value == 1){
-            particleSystem.material.uniforms.begin.value = 1;
+        if(particleSystem.material.uniforms.end.value == this.objLen-1){
+            particleSystem.material.uniforms.begin.value = particleSystem.material.uniforms.end.value;
             particleSystem.material.uniforms.end.value = 0;
         }else{
+            particleSystem.material.uniforms.begin.value = particleSystem.material.uniforms.end.value;
+            particleSystem.material.uniforms.end.value = particleSystem.material.uniforms.end.value+1;
+        }
+        /*if(particleSystem.material.uniforms.end.value == 1){
+            particleSystem.material.uniforms.begin.value = 1;
+            particleSystem.material.uniforms.end.value = 0;
+        }else {
             particleSystem.material.uniforms.begin.value = 0;
             particleSystem.material.uniforms.end.value = 1;
-        }
+        }*/
     }
 
+    //获得纹理
     getTexture(canvasSize = 64) {
         let canvas = document.createElement('canvas');
         canvas.width = canvasSize;
@@ -526,6 +542,7 @@ class ThreeDWorld {
         return texture;
     }
 
+    //更新视图
     update() {
         TWEEN.update();
         this.stats.update();

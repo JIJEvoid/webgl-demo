@@ -16,9 +16,9 @@
 	<div id="world"></div>
 	<script type="x-shader/x-vertex" id="vertexshader">
 		attribute float size;
-
 		attribute vec3 position2;
-
+		attribute vec3 position3;
+		attribute vec3 position4;
 		uniform float val;
 		uniform int begin;
 		uniform int end;
@@ -43,18 +43,18 @@
 				beforeposition = position;
 				afterposition = position2;
 			}
-			//else if(begin == 1 && end == 2){
-				//beforeposition = position2;
-				//afterposition = position3;
-			//}else if(begin == 2 && end == 3){
-				//beforeposition = position3;
-				//afterposition = position4;
-			//}
+			else if(begin == 1 && end == 2){
+				beforeposition = position2;
+				afterposition = position3;
+		    }
+		    else if(begin == 2 && end == 3){
+				beforeposition = position3;
+				afterposition = position4;
+		    }
 			else{
-			    beforeposition = position2;
+			    beforeposition = position4;
 				afterposition = position;
 			}
-
 
 			vPos.x = beforeposition.x * val + afterposition.x * (1.-val);
 			vPos.y = beforeposition.y* val + afterposition.y * (1.-val);
@@ -90,6 +90,7 @@
 			gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
 		}
 	</script>
+
 	<script src="./lib/three.min.js"></script>
 	<script src="./lib/stats.min.js"></script>
 	<script src="./lib/OrbitControls.js"></script>
