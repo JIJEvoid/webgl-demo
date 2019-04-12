@@ -19,16 +19,15 @@
 		attribute vec3 position2;
 		attribute vec3 position3;
 		attribute vec3 position4;
+
 		uniform float val;
 		uniform int begin;
 		uniform int end;
+
 		varying vec3 vColor;
 		varying float opacity;
-
 		varying vec3 beforeposition;
 		varying vec3 afterposition;
-
-
 
 		void main() {
 			float border = -150.0;
@@ -39,22 +38,32 @@
 
 			vec3 vPos;
 
-			if(begin == 0 && end == 1){
+			if(begin == 0){
 				beforeposition = position;
-				afterposition = position2;
 			}
-			else if(begin == 1 && end == 2){
+			else if(begin == 1){
 				beforeposition = position2;
-				afterposition = position3;
-		    }
-		    else if(begin == 2 && end == 3){
+			}
+			else if(begin == 2){
 				beforeposition = position3;
-				afterposition = position4;
-		    }
-			else{
-			    beforeposition = position4;
+			}
+			else if(begin == 3){
+				beforeposition = position4;
+			}
+
+			if(end == 0){
 				afterposition = position;
 			}
+			else if(end == 1){
+				afterposition = position2;
+			}
+			else if(end == 2){
+				afterposition = position3;
+			}
+			else if(end == 3){
+				afterposition = position4;
+			}
+
 
 			vPos.x = beforeposition.x * val + afterposition.x * (1.-val);
 			vPos.y = beforeposition.y* val + afterposition.y * (1.-val);
