@@ -7,8 +7,8 @@ class ThreeDWorld {
         this.end = 0;
         //模型数量
         this.objLen = 0;
-        //模型文件路径
-        this.modelingFiles =['obj/robot.fbx', 'obj/Guitar/Guitar.fbx','obj/monu9.obj','obj/cpbook2.json','obj/cpmovie4.json'];
+        //模型文件路径 'obj/finishfactory.stl'
+        this.modelingFiles =['obj/robot.fbx', 'obj/Guitar/Guitar.fbx','obj/monu9.obj','obj/cpbook2.json','obj/cpmovie4.json',];
         //模型
 
     }
@@ -257,6 +257,7 @@ class ThreeDWorld {
         let fbxLoader = new THREE.FBXLoader();
         let mtlLoader = new THREE.MTLLoader();
         let objLoader = new THREE.OBJLoader();
+        let stlLoader = new THREE.STLLoader();
         let basePath, pathName, pathFomat;
         let promiseArr = pathArr.map((path) => {
             basePath = path.substring(0, path.lastIndexOf('/') + 1);
@@ -319,6 +320,16 @@ class ThreeDWorld {
                         });
                     });
                     break;
+                case 'stl':
+                    return new Promise(function(resolve, reject) {
+                        stlLoader.load(path, (geometry, material) => {
+                            resolve({
+                                geometry: geometry,
+                                material: material
+                            })
+                        });
+                    });
+                    break;
                 default:
                     return '';
             }
@@ -330,7 +341,12 @@ class ThreeDWorld {
     addObjs() {
         this.loader(this.modelingFiles).then((result) => {
 
+            console.log(result);
+
             let robot = result[0].children[1].geometry;
+            //let robot2 = result[5].geometry;
+
+
             let guitarObj = result[1].children[0].geometry;
             let vertices3 = result[3].geometry;
             let vertices4 = result[4].geometry;
