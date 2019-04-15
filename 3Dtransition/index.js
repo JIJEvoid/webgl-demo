@@ -7,10 +7,9 @@ class ThreeDWorld {
         this.end = 0;
         //模型数量
         this.objLen = 0;
-        //模型文件路径 'obj/finishfactory.stl'
-        this.modelingFiles =['obj/robot.fbx', 'obj/Guitar/Guitar.fbx','obj/monu9.obj','obj/cpbook2.json','obj/cpmovie4.json',];
+        //模型文件路径
+        this.modelingFiles =[ 'obj/robot.fbx','obj/Guitar/Guitar.fbx','obj/monu9.obj','obj/cpbook2.json','obj/cpmovie4.json',];
         //模型
-
     }
 
     constructor(canvasContainer) {
@@ -344,8 +343,6 @@ class ThreeDWorld {
             console.log(result);
 
             let robot = result[0].children[1].geometry;
-            //let robot2 = result[5].geometry;
-
 
             let guitarObj = result[1].children[0].geometry;
             let vertices3 = result[3].geometry;
@@ -367,7 +364,6 @@ class ThreeDWorld {
             robot.rotateX(-Math.PI / 2);
             robot.translate(30,0,0);//设定模型位置
             this.addPartices([vertices4, vertices3,robot,guitarObj]);
-
         });
     }
 
