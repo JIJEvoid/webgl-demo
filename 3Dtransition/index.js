@@ -411,14 +411,22 @@ class ThreeDWorld {
 
         // sizes用来控制每个顶点的尺寸，初始为4
         let sizes = new Float32Array(moreLen);
-
+        let beginposition = new Float32Array(moreLen);
         for (let i = 0; i < moreLen; i++) {
             sizes[i] = 4;
+            beginposition[i] = (Math.random()*2000-1000);
+        }
+
+        for (var i=0;i<moreLen;i++){
+
         }
 
         // 挂载属性值
         moreObj.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+        moreObj.addAttribute('beginposition', new THREE.BufferAttribute(beginposition, 3));
         moreObj.addAttribute('position', new THREE.BufferAttribute(positionArr[0], 3));
+        //moreObj.addAttribute('position', new THREE.BufferAttribute(beginposition, 3));
         moreObj.addAttribute('position2', new THREE.BufferAttribute(positionArr[1], 3));
         moreObj.addAttribute('position3', new THREE.BufferAttribute(positionArr[2], 3));
         moreObj.addAttribute('position4', new THREE.BufferAttribute(positionArr[3], 3));
@@ -445,7 +453,7 @@ class ThreeDWorld {
                 value: 0 //转变目标模型id
             }
         };
-
+        console.log(uniforms);
         // 着色器材料
         let shaderMaterial = new THREE.ShaderMaterial({
             uniforms: uniforms,
@@ -475,8 +483,9 @@ class ThreeDWorld {
         this.tweenInstance1 = tween;
         this.tweenInstance2 = tweenBack;
 
-        particleSystem.material.uniforms.begin.value = 0;
-        particleSystem.material.uniforms.end.value = 1;
+        particleSystem.material.uniforms.begin.value = 99;
+        particleSystem.material.uniforms.end.value = 0;
+
         tween.start();
 
         // 动画持续更新的回调函数

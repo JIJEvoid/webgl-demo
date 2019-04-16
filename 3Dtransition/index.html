@@ -14,12 +14,13 @@
 </head>
 <body>
 	<div id="world"></div>
-
 	<script type="x-shader/x-vertex" id="vertexshader">
 		attribute float size;
 		attribute vec3 position2;
 		attribute vec3 position3;
 		attribute vec3 position4;
+
+		attribute vec3 beginposition;
 
 		uniform float val;
 		uniform int begin;
@@ -51,6 +52,9 @@
 			else if(begin == 3){
 				beforeposition = position4;
 			}
+			else if(begin == 99){
+				beforeposition = beginposition;
+			}
 
 			if(end == 0){
 				afterposition = position;
@@ -64,7 +68,6 @@
 			else if(end == 3){
 				afterposition = position4;
 			}
-
 
 			vPos.x = beforeposition.x * val + afterposition.x * (1.-val);
 			vPos.y = beforeposition.y* val + afterposition.y * (1.-val);
@@ -90,6 +93,7 @@
 			gl_Position = projectionMatrix * mvPosition;
 		}
 	</script>
+
 	<script type="x-shader/x-fragment" id="fragmentshader">
 		uniform vec3 color;
 		uniform sampler2D texture;
@@ -100,6 +104,7 @@
 			gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
 		}
 	</script>
+
 	<script src="./lib/three.min.js"></script>
 	<script src="./lib/stats.min.js"></script>
 	<script src="./lib/OrbitControls.js"></script>
