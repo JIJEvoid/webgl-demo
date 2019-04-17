@@ -32,8 +32,10 @@
 		varying vec3 afterposition;
 
 		void main() {
+
 			float border = -150.0;
 			float min_border = -140.0;
+			float max_border = 0.0;
 			float max_opacity = 1.0;
 			float min_opacity = 0.03;
 			float sizeAdd = 20.0;
@@ -113,7 +115,9 @@
 	<script src="./lib/OBJLoader.js"></script>
 	<script src="./lib/inflate.min.js"></script>
 	<script src="./lib/FBXLoader.js"></script>
-    <script src="lib/STLLoader.js"></script>
+    <script src="./lib/STLLoader.js"></script>
+    <script src="./lib/PLYLoader.js"></script>
+    <script src="./lib/GLTFLoader.js"></script>
     <script src="./index.js"></script>
 
 </body>

@@ -1,15 +1,23 @@
 class ThreeDWorld {
     // 初始化数据层
     initVo() {
-        //开始模型索引
+        // 开始模型索引
         this.start = 0;
-        //结束模型索引
+        // 结束模型索引
         this.end = 0;
-        //模型数量
+        // 模型数量
         this.objLen = 0;
-        //模型文件路径
-        this.modelingFiles =[ 'obj/robot.fbx','obj/Guitar/Guitar.fbx','obj/monu9.obj','obj/cpbook2.json','obj/cpmovie4.json',];
-        //模型
+        // 模型文件路径
+        this.modelingFiles =[
+            'obj/robot.fbx',// 雪人 => game
+            'obj/cpbook2.json', // book => h5海报
+            'obj/cpmovie4.json', //电影 => 媒体
+            'obj/cpac5.json', // 宝剑 =>
+        ];
+
+
+
+
     }
 
     constructor(canvasContainer) {
@@ -257,6 +265,7 @@ class ThreeDWorld {
         let mtlLoader = new THREE.MTLLoader();
         let objLoader = new THREE.OBJLoader();
         let stlLoader = new THREE.STLLoader();
+        let gltfLoader = new THREE.GLTFLoader();
         let basePath, pathName, pathFomat;
         let promiseArr = pathArr.map((path) => {
             basePath = path.substring(0, path.lastIndexOf('/') + 1);
@@ -287,6 +296,13 @@ class ThreeDWorld {
                 case 'fbx':
                     return new Promise(function(resolve) {
                         fbxLoader.load(path, (object) => {
+                            resolve(object);
+                        });
+                    });
+                    break;
+                case 'gltf':
+                    return new Promise(function(resolve) {
+                        gltfLoader.load(path, (object) => {
                             resolve(object);
                         });
                     });
@@ -339,31 +355,35 @@ class ThreeDWorld {
     // 模型加入场景
     addObjs() {
         this.loader(this.modelingFiles).then((result) => {
-
             console.log(result);
 
+            // 雪人 right
             let robot = result[0].children[1].geometry;
-
-            let guitarObj = result[1].children[0].geometry;
-            let vertices3 = result[3].geometry;
-            let vertices4 = result[4].geometry;
-
-            vertices3.scale(100,100,100);
-            vertices3.center();
-            vertices3.translate(0,0,0);//设定模型位置
-            vertices3.rotateY(Math.PI / 4);
-
-            vertices4.scale(50,50,50);
-            vertices4.center();
-            vertices4.translate(0,0,0);//设定模型位置
-            vertices4.rotateX(Math.PI / 2);
-
-            guitarObj.scale(1.5, 1.5, 1.5);
-            guitarObj.rotateX(-Math.PI / 2);
             robot.scale(0.08, 0.08, 0.08);
             robot.rotateX(-Math.PI / 2);
-            robot.translate(30,0,0);//设定模型位置
-            this.addPartices([vertices4, vertices3,robot,guitarObj]);
+            robot.translate(50,0,0);//设定模型位置
+
+            // 书 left
+            let vertices1 = result[1].geometry;
+            vertices1.scale(80,80,80);
+            vertices1.center();
+            vertices1.translate(-30,0,0);//设定模型位置
+            vertices1.rotateY(Math.PI / 4);
+
+            // 小鸟 left
+            let vertices2 = result[3].geometry;
+            vertices2.scale(50,50,50);
+            vertices2.center();
+            vertices2.translate(50,0,0);//设定模型位置
+            vertices2.rotateY(-Math.PI / 4);
+
+            // 影标 right
+            let vertices3 = result[2].geometry;
+            vertices3.scale(45,45,45);
+            vertices3.center();
+            vertices3.translate(-30,0,0);//设定模型位置
+            vertices3.rotateX(Math.PI / 2);
+            this.addPartices([robot,vertices1,vertices2,vertices3]);
         });
     }
 
@@ -611,6 +631,7 @@ class ThreeDWorld {
         if (this.particleSystem) {
             let bufferObj = this.particleSystem.geometry;
             //this.particleSystem.rotation.y = 0.01 * time;
+            //this.camera.rotation.y+=0.0001;
             let sizes = bufferObj.attributes.size.array;
             let len = sizes.length;
             for (let i = 0; i < len; i++) {
